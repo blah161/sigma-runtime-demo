@@ -233,7 +233,8 @@ let currentState = "Q1";
 function reset(){
   currentState = "Q1";
   updateState("Q1");
-// document.getElementById("log").innerHTML = "";}
+  document.getElementById("log").innerHTML = "";
+}
 
 function highlightEdge(from,to){
 
@@ -320,24 +321,7 @@ function send(action){
       return;
     }
 
-    highlightEdge(currentState, data.next_state);
-
-    currentState = data.next_state;
-
-    updateState(currentState);
-    log(data.proof);
-
-    if(currentState === "END"){
-      log({
-        from: "SYSTEM",
-        to: "END",
-        action: "COMPLETE",
-        rule: "Execution complete",
-        valid: true
-      });
-    }
-
-  })
+   
   .catch(err => {
     console.error("Error:", err);
   });
