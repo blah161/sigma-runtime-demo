@@ -237,50 +237,19 @@ function reset(){
 }
 
 function highlightEdge(from,to){
+  document.querySelectorAll(".edge").forEach(e=>e.classList.remove("active"));
 
-  let edge = null;
-
-  if(from==="Q1" && to==="Q2") edge = e1;
-  if(from==="Q1" && to==="Q3") edge = e2;
-  if(from==="Q2" && to==="END") edge = e3;
-  if(from==="Q3" && to==="END") edge = e4;
-
-  if(!edge) return;
-
-  edge.classList.add("active");
-
-  // fade out trail after delay
-  setTimeout(()=>{
-    edge.classList.remove("active");
-  }, 900);
+  if(from==="Q1" && to==="Q2") e1.classList.add("active");
+  if(from==="Q1" && to==="Q3") e2.classList.add("active");
+  if(from==="Q2" && to==="END") e3.classList.add("active");
+  if(from==="Q3" && to==="END") e4.classList.add("active");
 }
 
 function updateState(state){
   document.getElementById("state").innerText = state;
 
-  // highlight node
   document.querySelectorAll(".node").forEach(n=>n.classList.remove("active"));
   document.getElementById(state).classList.add("active");
-
-  // disable all buttons first
-  document.querySelectorAll(".controls button").forEach(b => b.disabled = true);
-
-  // enable only valid transitions
-  if(state === "Q1"){
-    enableButton("Yes");
-    enableButton("No");
-  }
-
-  if(state === "Q2" || state === "Q3"){
-    enableButton("Text");
-  }
-}
-function enableButton(label){
-  document.querySelectorAll(".controls button").forEach(b=>{
-    if(b.innerText === label){
-      b.disabled = false;
-    }
-  });
 }
 
 function log(proof){
@@ -288,15 +257,7 @@ function log(proof){
   const div = document.createElement("div");
   div.className="entry";
   div.innerHTML = `
-<span style="color:#8ab4ff">[${time}]</span>
-
-<div style="margin-top:6px">
-  <span style="color:#b0ffcf">TRANSITION</span><br>
-  State: ${proof.from} → ${proof.to}<br>
-  Action: ${proof.action}<br>
-  Rule: ${proof.rule}<br>
-  <span style="color:#b0ffcf">Status: ${proof.valid ? "VALID" : "INVALID"}</span>
-</div>
+[${time}] ${proof.rule}
 `;
   document.getElementById("log").appendChild(div);
 }
@@ -308,24 +269,11 @@ function send(action){
     body: JSON.stringify({state:currentState, action:action})
   })
   .then(r=>r.json())
-  .then(data => {
-
+  .then(data=>{
     if(data.error){
-      log({
-        from: currentState,
-        to: "—",
-        action: action,
-        rule: "Invalid transition",
-        valid: false
-      });
+      alert(data.error);
       return;
     }
-
-   
-  .catch(err => {
-    console.error("Error:", err);
-  });
-}
 
     highlightEdge(currentState, data.next_state);
 
@@ -333,20 +281,11 @@ function send(action){
 
     updateState(currentState);
     log(data.proof);
-
-if(currentState==="END"){
-  log({
-    from: "SYSTEM",
-    to: "END",
-    action: "COMPLETE",
-    rule: "Execution complete",
-    valid: true
   });
 }
 
-});
-}
 updateState("Q1");
+
 </script>
 
 </body>
