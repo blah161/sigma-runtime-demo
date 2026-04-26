@@ -307,7 +307,7 @@ function send(action){
     body: JSON.stringify({state:currentState, action:action})
   })
   .then(r=>r.json())
-  .then(data=>{
+  .then(data => {
 
     if(data.error){
       log({
@@ -319,6 +319,29 @@ function send(action){
       });
       return;
     }
+
+    highlightEdge(currentState, data.next_state);
+
+    currentState = data.next_state;
+
+    updateState(currentState);
+    log(data.proof);
+
+    if(currentState === "END"){
+      log({
+        from: "SYSTEM",
+        to: "END",
+        action: "COMPLETE",
+        rule: "Execution complete",
+        valid: true
+      });
+    }
+
+  })
+  .catch(err => {
+    console.error("Error:", err);
+  });
+}
 
     highlightEdge(currentState, data.next_state);
 
