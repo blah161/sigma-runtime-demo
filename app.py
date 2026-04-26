@@ -219,8 +219,9 @@ body{
 <button onclick="reset()">Reset</button>
 </div>
 
-<div class="log" id="log"></div>
 
+<div style="color:#8ab4ff; margin-bottom:6px;">Execution Trace</div>
+<div class="log" id="log"></div>
 </div>
 
 </div>
@@ -335,6 +336,10 @@ function send(action){
     rule: "Execution complete",
     valid: true
   });
+
+  setTimeout(() => {
+    reset();
+  }, 1400);
 }
 
 });
