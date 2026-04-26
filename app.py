@@ -233,8 +233,7 @@ let currentState = "Q1";
 function reset(){
   currentState = "Q1";
   updateState("Q1");
-  document.getElementById("log").innerHTML = "";
-}
+// document.getElementById("log").innerHTML = "";}
 
 function highlightEdge(from,to){
 
