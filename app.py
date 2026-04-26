@@ -142,6 +142,60 @@ HTML = """
       color:var(--faint);
       font-size:0.9rem;
     }
+
+    #output{
+  margin-top:18px;
+  padding:16px;
+  border-radius:10px;
+  background:#050a18;
+  border:1px solid var(--line);
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-height:120px;
+  max-height:260px;
+  overflow:auto;
+}
+
+.entry{
+  padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.entry.valid{
+  color:var(--accent2);
+}
+
+.entry.error{
+  color:#ff7a7a;
+}
+#graph{
+  margin-top:16px;
+  padding:12px;
+  border-radius:10px;
+  background:#050a18;
+  border:1px solid var(--line);
+}
+
+.node{
+  fill:#0b1020;
+  stroke:rgba(255,255,255,0.2);
+  stroke-width:2;
+}
+
+.node.active{
+  stroke:var(--accent2);
+  stroke-width:3;
+  filter:drop-shadow(0 0 6px rgba(176,255,207,0.6));
+}
+
+.edge{
+  stroke:rgba(255,255,255,0.2);
+  stroke-width:2;
+}
+
+.edge.active{
+  stroke:var(--accent);
+  stroke-width:3;
+}
   </style>
 </head>
 <body>
@@ -155,21 +209,141 @@ HTML = """
     <div class="state">
       Current State: <span id="state">Q1</span>
     </div>
+    <div id="graph"></div>
 
-    <button onclick="send('Yes')">Yes</button>
+    <button onclick="send('Yes')">Accept Branch</button>
+<button onclick="send('No')">Reject Branch</button>
+<button onclick="send('Text')">Emit Terminal</button>
     <button onclick="send('No')">No</button>
     <button onclick="send('Text')">Text</button>
     <button onclick="reset()">Reset</button>
 
-    <pre id="output">Awaiting transition...</pre>
-
+<div id="output">Awaiting transition...</div>
     <div class="note">
       Each valid transition returns a next state together with a proof object.
     </div>
   </div>
 
-<script>
 let currentState = "Q1";
+let history = [];
+
+const graphData = {
+  nodes: {
+    Q1: {x:60, y:80},
+    Q2: {x:200, y:20},
+    Q3: {x:200, y:140},
+    END: {x:340, y:80}
+  },
+  edges: [
+    ["Q1","Q2","Yes"],
+    ["Q1","Q3","No"],
+    ["Q2","END","Text"],
+    ["Q3","END","Text"]
+  ]
+};
+
+let activeEdges = [];
+
+function drawGraph(){
+  const container = document.getElementById("graph");
+
+  let svg = `<svg width="100%" height="180">`;
+
+  // edges
+  graphData.edges.forEach(([from,to,label])=>{
+    const a = graphData.nodes[from];
+    const b = graphData.nodes[to];
+
+    const isActive = activeEdges.some(e => e[0]===from && e[1]===to);
+
+    svg += `
+      <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"
+        class="edge ${isActive ? "active":""}" />
+      <text x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2 - 5}"
+        fill="rgba(255,255,255,0.5)" font-size="10">${label}</text>
+    `;
+  });
+
+  // nodes
+  Object.entries(graphData.nodes).forEach(([name,pos])=>{
+    const isActive = name === currentState;
+
+    svg += `
+      <circle cx="${pos.x}" cy="${pos.y}" r="14"
+        class="node ${isActive ? "active":""}" />
+      <text x="${pos.x}" y="${pos.y+4}"
+        text-anchor="middle"
+        fill="#fff"
+        font-size="10">${name}</text>
+    `;
+  });
+
+  svg += `</svg>`;
+  container.innerHTML = svg;
+}
+
+function renderStream(){
+  const output = document.getElementById("output");
+  output.innerHTML = "";
+
+  drawGraph();
+
+  history.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+
+    if(entry.error){
+      div.classList.add("error");
+      div.innerText = "✖ " + entry.error;
+    } else {
+      div.classList.add("valid");
+      div.innerText = "✔ " + entry.rule;
+    }
+
+    output.appendChild(div);
+  });
+
+  output.scrollTop = output.scrollHeight;
+}
+
+function reset(){
+  currentState = "Q1";
+  history = [];
+  activeEdges = [];
+  document.getElementById("state").innerText = "Q1";
+  renderStream();
+}
+
+function send(action){
+  fetch("/step", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({state:currentState, action:action})
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if(data.error){
+      history.push({error:data.error});
+      renderStream();
+      return;
+    }
+
+    currentState = data.next_state;
+    document.getElementById("state").innerText = currentState;
+
+    history.push({
+      rule: data.proof.rule
+    });
+    activeEdges.push([currentState, data.next_state]);
+
+    renderStream();
+
+    if(currentState === "END"){
+      setTimeout(reset, 1500);
+    }
+  });
+}
 
 function reset() {
   currentState = "Q1";
@@ -190,8 +364,9 @@ function send(action) {
       return;
     }
 
-    currentState = data.next_state;
-
+const prev = currentState;
+currentState = data.next_state;
+activeEdges.push([prev, currentState]);
     document.getElementById("state").innerText = currentState;
     document.getElementById("output").innerText =
       JSON.stringify(data.proof, null, 2);
