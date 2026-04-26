@@ -34,351 +34,221 @@ HTML = """
 <!doctype html>
 <html>
 <head>
-  <title>λΣ^R Verified Flow Demo</title>
-  <style>
-    :root{
-      --bg:#0b1020;
-      --panel:rgba(255,255,255,0.06);
-      --text:rgba(255,255,255,0.92);
-      --muted:rgba(255,255,255,0.70);
-      --faint:rgba(255,255,255,0.50);
-      --line:rgba(255,255,255,0.12);
-      --accent:#8ab4ff;
-      --accent2:#b0ffcf;
-    }
+<title>λΣ^R Runtime</title>
 
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(138,180,255,0.20), transparent 60%),
-        radial-gradient(900px 500px at 80% 20%, rgba(176,255,207,0.10), transparent 60%),
-        var(--bg);
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px;
-    }
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:rgba(255,255,255,0.06);
+  --line:rgba(255,255,255,0.12);
+  --text:#fff;
+  --muted:rgba(255,255,255,0.65);
+  --accent:#8ab4ff;
+  --accent2:#b0ffcf;
+}
 
-    .card{
-      width:min(720px, 100%);
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:28px;
-      box-shadow:0 18px 60px rgba(0,0,0,0.45);
-    }
+body{
+  margin:0;
+  font-family:system-ui;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .label{
-      font-size:0.72rem;
-      letter-spacing:0.14em;
-      text-transform:uppercase;
-      color:var(--faint);
-      margin-bottom:10px;
-    }
+/* LAYOUT */
+.container{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  height:100vh;
+}
 
-    h1{
-      margin:0 0 12px 0;
-      font-size:1.8rem;
-      line-height:1.15;
-      letter-spacing:-0.02em;
-    }
+/* LEFT: GRAPH */
+.graph{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-right:1px solid var(--line);
+}
 
-    .badge{
-      display:inline-block;
-      padding:4px 12px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,0.05);
-      color:var(--faint);
-      font-size:0.82rem;
-      margin-bottom:22px;
-    }
+/* RIGHT: CONSOLE */
+.console{
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+}
 
-    .state{
-      font-size:1.15rem;
-      margin:18px 0;
-      color:var(--muted);
-    }
+.header{
+  font-size:0.8rem;
+  letter-spacing:0.14em;
+  color:var(--muted);
+}
 
-    #state{
-      color:var(--accent2);
-      font-weight:700;
-      font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
+.state{
+  font-size:1.4rem;
+  margin:12px 0;
+  color:var(--accent2);
+  font-family:monospace;
+}
 
-    button{
-      padding:10px 16px;
-      margin:0 8px 12px 0;
-      border-radius:8px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,0.06);
-      color:var(--text);
-      font-weight:600;
-      cursor:pointer;
-    }
+.controls button{
+  margin:6px;
+  padding:10px 14px;
+  border:none;
+  border-radius:6px;
+  background:var(--panel);
+  color:white;
+  cursor:pointer;
+}
 
-    button:hover{
-      background:linear-gradient(90deg, var(--accent), var(--accent2));
-      color:#000;
-    }
+.controls button:hover{
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  color:black;
+}
 
-    pre{
-      margin-top:18px;
-      padding:16px;
-      border-radius:10px;
-      background:#050a18;
-      border:1px solid var(--line);
-      color:var(--accent2);
-      font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
-      white-space:pre-wrap;
-      min-height:90px;
-    }
-
-    .note{
-      margin-top:16px;
-      color:var(--faint);
-      font-size:0.9rem;
-    }
-
-    #output{
-  margin-top:18px;
-  padding:16px;
-  border-radius:10px;
-  background:#050a18;
-  border:1px solid var(--line);
-  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
-  min-height:120px;
-  max-height:260px;
+/* PROOF STREAM */
+.log{
+  margin-top:16px;
+  flex:1;
   overflow:auto;
+  background:#050a18;
+  padding:12px;
+  border-radius:8px;
+  font-family:monospace;
+  font-size:0.9rem;
 }
 
 .entry{
-  padding:6px 0;
-  border-bottom:1px solid rgba(255,255,255,0.06);
-}
-
-.entry.valid{
+  margin-bottom:10px;
   color:var(--accent2);
 }
 
-.entry.error{
-  color:#ff7a7a;
-}
-#graph{
-  margin-top:16px;
-  padding:12px;
-  border-radius:10px;
-  background:#050a18;
-  border:1px solid var(--line);
-}
-
+/* GRAPH SVG */
 .node{
-  fill:#0b1020;
-  stroke:rgba(255,255,255,0.2);
+  fill: #111;
+  stroke: var(--line);
   stroke-width:2;
 }
 
 .node.active{
-  stroke:var(--accent2);
-  stroke-width:3;
-  filter:drop-shadow(0 0 6px rgba(176,255,207,0.6));
+  stroke: var(--accent2);
+  stroke-width:4;
 }
 
 .edge{
-  stroke:rgba(255,255,255,0.2);
+  stroke: var(--muted);
   stroke-width:2;
 }
 
 .edge.active{
-  stroke:var(--accent);
-  stroke-width:3;
+  stroke: var(--accent);
+  stroke-width:4;
 }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="card">
-    <div class="label">AAD Systems · Executable Research Demo</div>
 
-    <h1>Verified Flow Engine (λΣᴿ)</h1>
+<div class="container">
 
-    <div class="badge">Type Theory · Runtime Semantics · Proof-Carrying Execution</div>
+<!-- GRAPH -->
+<div class="graph">
 
-    <div class="state">
-      Current State: <span id="state">Q1</span>
-    </div>
-    <div id="graph"></div>
+<svg width="300" height="220">
 
-    <button onclick="send('Yes')">Accept Branch</button>
-<button onclick="send('No')">Reject Branch</button>
-<button onclick="send('Text')">Emit Terminal</button>
-    <button onclick="send('No')">No</button>
-    <button onclick="send('Text')">Text</button>
-    <button onclick="reset()">Reset</button>
+<line id="e1" class="edge" x1="60" y1="60" x2="150" y2="30"/>
+<line id="e2" class="edge" x1="60" y1="60" x2="150" y2="120"/>
+<line id="e3" class="edge" x1="150" y1="30" x2="240" y2="80"/>
+<line id="e4" class="edge" x1="150" y1="120" x2="240" y2="80"/>
 
-<div id="output">Awaiting transition...</div>
-    <div class="note">
-      Each valid transition returns a next state together with a proof object.
-    </div>
-  </div>
+<circle id="Q1" class="node active" cx="60" cy="60" r="20"/>
+<circle id="Q2" class="node" cx="150" cy="30" r="20"/>
+<circle id="Q3" class="node" cx="150" cy="120" r="20"/>
+<circle id="END" class="node" cx="240" cy="80" r="20"/>
+
+</svg>
+
+</div>
+
+<!-- CONSOLE -->
+<div class="console">
+
+<div class="header">AAD SYSTEMS · λΣᴿ RUNTIME</div>
+
+<div class="state">STATE: <span id="state">Q1</span></div>
+
+<div class="controls">
+<button onclick="send('Yes')">Yes</button>
+<button onclick="send('No')">No</button>
+<button onclick="send('Text')">Text</button>
+<button onclick="reset()">Reset</button>
+</div>
+
+<div class="log" id="log"></div>
+
+</div>
+
+</div>
+
+<script>
 
 let currentState = "Q1";
-let history = [];
-
-const graphData = {
-  nodes: {
-    Q1: {x:60, y:80},
-    Q2: {x:200, y:20},
-    Q3: {x:200, y:140},
-    END: {x:340, y:80}
-  },
-  edges: [
-    ["Q1","Q2","Yes"],
-    ["Q1","Q3","No"],
-    ["Q2","END","Text"],
-    ["Q3","END","Text"]
-  ]
-};
-
-let activeEdges = [];
-
-function drawGraph(){
-  const container = document.getElementById("graph");
-
-  let svg = `<svg width="100%" height="180">`;
-
-  // edges
-  graphData.edges.forEach(([from,to,label])=>{
-    const a = graphData.nodes[from];
-    const b = graphData.nodes[to];
-
-    const isActive = activeEdges.some(e => e[0]===from && e[1]===to);
-
-    svg += `
-      <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"
-        class="edge ${isActive ? "active":""}" />
-      <text x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2 - 5}"
-        fill="rgba(255,255,255,0.5)" font-size="10">${label}</text>
-    `;
-  });
-
-  // nodes
-  Object.entries(graphData.nodes).forEach(([name,pos])=>{
-    const isActive = name === currentState;
-
-    svg += `
-      <circle cx="${pos.x}" cy="${pos.y}" r="14"
-        class="node ${isActive ? "active":""}" />
-      <text x="${pos.x}" y="${pos.y+4}"
-        text-anchor="middle"
-        fill="#fff"
-        font-size="10">${name}</text>
-    `;
-  });
-
-  svg += `</svg>`;
-  container.innerHTML = svg;
-}
-
-function renderStream(){
-  const output = document.getElementById("output");
-  output.innerHTML = "";
-
-  drawGraph();
-
-  history.forEach(entry => {
-    const div = document.createElement("div");
-    div.className = "entry";
-
-    if(entry.error){
-      div.classList.add("error");
-      div.innerText = "✖ " + entry.error;
-    } else {
-      div.classList.add("valid");
-      div.innerText = "✔ " + entry.rule;
-    }
-
-    output.appendChild(div);
-  });
-
-  output.scrollTop = output.scrollHeight;
-}
 
 function reset(){
   currentState = "Q1";
-  history = [];
-  activeEdges = [];
-  document.getElementById("state").innerText = "Q1";
-  renderStream();
+  updateState("Q1");
+  document.getElementById("log").innerHTML = "";
+}
+
+function highlightEdge(from,to){
+  document.querySelectorAll(".edge").forEach(e=>e.classList.remove("active"));
+
+  if(from==="Q1" && to==="Q2") e1.classList.add("active");
+  if(from==="Q1" && to==="Q3") e2.classList.add("active");
+  if(from==="Q2" && to==="END") e3.classList.add("active");
+  if(from==="Q3" && to==="END") e4.classList.add("active");
+}
+
+function updateState(state){
+  document.getElementById("state").innerText = state;
+
+  document.querySelectorAll(".node").forEach(n=>n.classList.remove("active"));
+  document.getElementById(state).classList.add("active");
+}
+
+function log(proof){
+  const div = document.createElement("div");
+  div.className="entry";
+  div.innerText = proof.rule;
+  document.getElementById("log").appendChild(div);
 }
 
 function send(action){
   fetch("/step", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({state:currentState, action:action})
+    body: JSON.stringify({state:currentState, action:action})
   })
-  .then(res => res.json())
-  .then(data => {
-
+  .then(r=>r.json())
+  .then(data=>{
     if(data.error){
-      history.push({error:data.error});
-      renderStream();
+      alert(data.error);
       return;
     }
+
+    highlightEdge(currentState, data.next_state);
 
     currentState = data.next_state;
-    document.getElementById("state").innerText = currentState;
 
-    history.push({
-      rule: data.proof.rule
-    });
-    activeEdges.push([currentState, data.next_state]);
+    updateState(currentState);
+    log(data.proof);
 
-    renderStream();
-
-    if(currentState === "END"){
-      setTimeout(reset, 1500);
+    if(currentState==="END"){
+      setTimeout(reset,1200);
     }
   });
 }
 
-function reset() {
-  currentState = "Q1";
-  document.getElementById("state").innerText = "Q1";
-  document.getElementById("output").innerText = "Reset to Q1";
-}
-
-function send(action) {
-  fetch("/step", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({state: currentState, action: action})
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      document.getElementById("output").innerText = data.error;
-      return;
-    }
-
-const prev = currentState;
-currentState = data.next_state;
-activeEdges.push([prev, currentState]);
-    document.getElementById("state").innerText = currentState;
-    document.getElementById("output").innerText =
-      JSON.stringify(data.proof, null, 2);
-
-    if (currentState === "END") {
-      setTimeout(() => {
-        reset();
-      }, 1400);
-    }
-  });
-}
 </script>
+
 </body>
 </html>
 """
