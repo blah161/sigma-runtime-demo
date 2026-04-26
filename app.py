@@ -250,6 +250,31 @@ function updateState(state){
 
   document.querySelectorAll(".node").forEach(n=>n.classList.remove("active"));
   document.getElementById(state).classList.add("active");
+
+  // disable all buttons
+  document.querySelectorAll(".controls button").forEach(b => b.disabled = true);
+
+  if(state === "Q1"){
+    enable("Yes");
+    enable("No");
+  }
+
+  if(state === "Q2" || state === "Q3"){
+    enable("Text");
+    enable("Reset");
+  }
+
+  if(state === "END"){
+    enable("Reset");
+  }
+}
+
+function enable(label){
+  document.querySelectorAll(".controls button").forEach(b=>{
+    if(b.innerText === label){
+      b.disabled = false;
+    }
+  });
 }
 
 function log(proof){
