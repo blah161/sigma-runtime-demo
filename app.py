@@ -328,11 +328,17 @@ function send(action){
     log(data.proof);
 
     if(currentState==="END"){
-      setTimeout(reset,1200);
-    }
+  log({
+    from: "SYSTEM",
+    to: "END",
+    action: "COMPLETE",
+    rule: "Execution complete",
+    valid: true
   });
 }
 
+});
+}
 updateState("Q1");
 </script>
 
