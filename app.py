@@ -327,7 +327,7 @@ function send(action){
     updateState(currentState);
     log(data.proof);
 
-    if(currentState==="END"){
+if(currentState==="END"){
   log({
     from: "SYSTEM",
     to: "END",
@@ -335,10 +335,6 @@ function send(action){
     rule: "Execution complete",
     valid: true
   });
-
-  setTimeout(() => {
-    reset();
-  }, 1400);
 }
 
 });
