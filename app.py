@@ -62,10 +62,19 @@ function send(action) {
       return;
     }
 
-    currentState = data.next_state;
-    document.getElementById("state").innerText = currentState;
-    document.getElementById("output").innerText =
-      JSON.stringify(data.proof, null, 2);
+  currentState = data.next_state;
+
+document.getElementById("state").innerText = currentState;
+document.getElementById("output").innerText =
+  JSON.stringify(data.proof, null, 2);
+
+if (currentState === "END") {
+  setTimeout(() => {
+    currentState = "Q1";
+    document.getElementById("state").innerText = "Q1";
+    document.getElementById("output").innerText = "Reset to Q1";
+  }, 1200);
+}
   });
 }
 </script>
