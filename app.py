@@ -106,6 +106,12 @@ body{
   background:linear-gradient(90deg,var(--accent),var(--accent2));
   color:black;
 }
+.controls button:disabled{
+  opacity:0.25;
+  cursor:not-allowed;
+  background:rgba(255,255,255,0.04);
+  color:rgba(255,255,255,0.3);
+}
 
 /* PROOF STREAM */
 .log{
@@ -144,7 +150,30 @@ body{
 .edge.active{
   stroke: var(--accent);
   stroke-width:4;
+
+  /* flowing dash */
+  stroke-dasharray:8;
+  animation:
+    flow 0.8s linear infinite,
+    glowPulse 1.2s ease-in-out infinite;
+
+  /* glow */
+  filter: drop-shadow(0 0 6px rgba(138,180,255,0.6))
+          drop-shadow(0 0 14px rgba(176,255,207,0.4));
 }
+
+/* motion */
+@keyframes flow{
+  to { stroke-dashoffset: -16; }
+}
+
+/* pulsing energy */
+@keyframes glowPulse{
+  0%   { opacity:0.7; }
+  50%  { opacity:1; }
+  100% { opacity:0.7; }
+}
+
 </style>
 </head>
 
@@ -166,6 +195,11 @@ body{
 <circle id="Q2" class="node" cx="150" cy="30" r="20"/>
 <circle id="Q3" class="node" cx="150" cy="120" r="20"/>
 <circle id="END" class="node" cx="240" cy="80" r="20"/>
+
+<text x="60" y="95" fill="white" font-size="12" text-anchor="middle">Q1</text>
+<text x="150" y="60" fill="white" font-size="12" text-anchor="middle">Q2</text>
+<text x="150" y="155" fill="white" font-size="12" text-anchor="middle">Q3</text>
+<text x="240" y="115" fill="white" font-size="12" text-anchor="middle">END</text>
 
 </svg>
 
@@ -202,25 +236,57 @@ function reset(){
 }
 
 function highlightEdge(from,to){
-  document.querySelectorAll(".edge").forEach(e=>e.classList.remove("active"));
 
-  if(from==="Q1" && to==="Q2") e1.classList.add("active");
-  if(from==="Q1" && to==="Q3") e2.classList.add("active");
-  if(from==="Q2" && to==="END") e3.classList.add("active");
-  if(from==="Q3" && to==="END") e4.classList.add("active");
+  let edge = null;
+
+  if(from==="Q1" && to==="Q2") edge = e1;
+  if(from==="Q1" && to==="Q3") edge = e2;
+  if(from==="Q2" && to==="END") edge = e3;
+  if(from==="Q3" && to==="END") edge = e4;
+
+  if(!edge) return;
+
+  edge.classList.add("active");
+
+  // fade out trail after delay
+  setTimeout(()=>{
+    edge.classList.remove("active");
+  }, 900);
 }
 
 function updateState(state){
   document.getElementById("state").innerText = state;
 
+  // highlight node
   document.querySelectorAll(".node").forEach(n=>n.classList.remove("active"));
   document.getElementById(state).classList.add("active");
+
+  // disable all buttons first
+  document.querySelectorAll(".controls button").forEach(b => b.disabled = true);
+
+  // enable only valid transitions
+  if(state === "Q1"){
+    enableButton("Yes");
+    enableButton("No");
+  }
+
+  if(state === "Q2" || state === "Q3"){
+    enableButton("Text");
+  }
+}
+function enableButton(label){
+  document.querySelectorAll(".controls button").forEach(b=>{
+    if(b.innerText === label){
+      b.disabled = false;
+    }
+  });
 }
 
 function log(proof){
+  const time = new Date().toLocaleTimeString();
   const div = document.createElement("div");
   div.className="entry";
-div.innerHTML = `
+  div.innerHTML = `
 <span style="color:#8ab4ff">[${time}]</span>
 
 <div style="margin-top:6px">
@@ -242,8 +308,15 @@ function send(action){
   })
   .then(r=>r.json())
   .then(data=>{
+
     if(data.error){
-      alert(data.error);
+      log({
+        from: currentState,
+        to: "—",
+        action: action,
+        rule: "Invalid transition",
+        valid: false
+      });
       return;
     }
 
@@ -260,6 +333,7 @@ function send(action){
   });
 }
 
+updateState("Q1");
 </script>
 
 </body>
