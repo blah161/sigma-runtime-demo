@@ -14,10 +14,13 @@ TRANSITIONS = {
 # --- Proof Generator ---
 def make_proof(s, action, s_next):
     return {
-        "type": "Proof",
-        "rule": f"{s} + {action} -> {s_next}",
-        "valid": True
-    }
+    "type": "Proof",
+    "from": s,
+    "action": action,
+    "to": s_next,
+    "rule": f"{s} + {action} -> {s_next}",
+    "valid": True
+}
 
 # --- Runtime (λΣ^R) ---
 def step(state, action):
@@ -217,7 +220,17 @@ function updateState(state){
 function log(proof){
   const div = document.createElement("div");
   div.className="entry";
-  div.innerText = proof.rule;
+div.innerHTML = `
+<span style="color:#8ab4ff">[${time}]</span>
+
+<div style="margin-top:6px">
+  <span style="color:#b0ffcf">TRANSITION</span><br>
+  State: ${proof.from} → ${proof.to}<br>
+  Action: ${proof.action}<br>
+  Rule: ${proof.rule}<br>
+  <span style="color:#b0ffcf">Status: ${proof.valid ? "VALID" : "INVALID"}</span>
+</div>
+`;
   document.getElementById("log").appendChild(div);
 }
 
